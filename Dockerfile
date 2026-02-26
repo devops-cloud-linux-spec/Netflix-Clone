@@ -3,22 +3,23 @@ FROM node:16.17.0-alpine AS builder
 
 WORKDIR /app
 
-# Install dependencies
+# Copy package files
 COPY package*.json ./
-RUN npm ci --omit=dev
 
+# Install dependencies (no lock file required)
+RUN npm install
 
-# Copy source code
+# Copy source
 COPY . .
 
 # Build arguments
 ARG TMDB_V3_API_KEY
 
-# Environment variables for Vite build
+# Vite environment variables
 ENV VITE_APP_TMDB_V3_API_KEY=${TMDB_V3_API_KEY}
 ENV VITE_APP_API_ENDPOINT_URL="https://api.themoviedb.org/3"
 
-# Build the app
+# Build app
 RUN npm run build
 
 
@@ -27,10 +28,8 @@ FROM nginx:stable-alpine
 
 WORKDIR /usr/share/nginx/html
 
-# Remove default nginx static files
 RUN rm -rf ./*
 
-# Copy built app from builder
 COPY --from=builder /app/dist .
 
 EXPOSE 80
